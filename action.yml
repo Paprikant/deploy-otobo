@@ -1,0 +1,35 @@
+name: "Deploy OTOBO"
+description: "deploys OTOBO locally using the official docker-compose images"
+
+
+inputs:
+  # OTOBO Version
+  # Use tags from https://github.com/RotherOSS/otobo-docker/tags
+  version:
+    description: "the OTOBO version to deploy"
+    required: true
+    defaule: "rel-10_1_7"
+
+
+runs:
+  using: 'composite'
+  steps:
+    # Get OTOBO docker files
+    - uses: actions/checkout@v3
+      with:
+        repository: git@github.com:RotherOSS/otobo-docker.git
+        ref: ${{ inputs.version }}
+
+    # Prepare files for basic OTOBO setup
+    - working-directory: otobo-docker
+      shell: bash
+      run: |
+        cp docker-compose/
+        cp .docker_compose_env_http .env
+        sed -i 's/^OTOBO_DB_ROOT_PASSWORD.*$/OTOBO_DB_ROOT_PASSWORD=password/g' .env
+
+   # Start OTOBO using docker-compose
+   - working-directory: otobo-docker
+     shell: bash
+     run: |
+       docker-compose up -d
